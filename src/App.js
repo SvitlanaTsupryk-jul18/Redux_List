@@ -1,6 +1,5 @@
 import React from 'react';
 import './App.css';
-
 import TodoList, {
   SORT_ORDER_COMPLETED,
   SORT_ORDER_TITLE,
@@ -8,7 +7,7 @@ import TodoList, {
   SORT_ORDER_ID,
 } from './Components/TodoList';
 import { getUsers, getTodos } from './Components/api';
-
+import { connect } from 'react-redux';
 
 class App extends React.Component {
   state = {
@@ -137,4 +136,13 @@ class App extends React.Component {
   }
 }
 
-export default App;
+const mapState = (state) => ({
+  count: state.count,
+});
+
+const mapDispatch = (dispatch) => ({
+  increase: () => dispatch(increaseAction),
+  decrease: () => dispatch(decreaseAction),
+});
+
+export default connect(mapState, mapDispatch)(App);

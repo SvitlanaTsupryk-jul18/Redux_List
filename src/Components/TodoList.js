@@ -14,30 +14,23 @@ const TodoList = ({ items, onSort, sortField, toggleTodo }) => (
                 <th
                     className={sortField === SORT_ORDER_ID ? 'active' : ''}
                     onClick={() => onSort(SORT_ORDER_ID)}
-                >
-                    id
-          </th>
-
+                >id
+                </th>
                 <th
                     className={sortField === SORT_ORDER_COMPLETED ? 'active' : ''}
                     onClick={() => onSort(SORT_ORDER_COMPLETED)}
-                >
-                    done
-          </th>
-
+                >done
+                </th>
                 <th
                     className={sortField === SORT_ORDER_TITLE ? 'active' : ''}
                     onClick={() => onSort(SORT_ORDER_TITLE)}
-                >
-                    title
-          </th>
-
+                >title
+                </th>
                 <th
                     className={sortField === SORT_ORDER_USER ? 'active' : ''}
                     onClick={() => onSort(SORT_ORDER_USER)}
-                >
-                    user
-          </th>
+                >user
+                </th>
             </tr>
         </thead>
         <tbody>
