@@ -10,139 +10,143 @@ import { getUsers, getTodos } from './Components/api';
 import { connect } from 'react-redux';
 
 class App extends React.Component {
-  state = {
-    query: '',
-    sortField: '',
-    isSortedAsc: true,
-    isLoaded: false,
-    todos: [],
-    visibleTodos: [],
-  };
+  async componentDidMount() {
+    const { startLoading, finishLoading, setProducts } = this.props;
 
-  loadData = async () => {
-    const [todos, users] = await Promise.all([
-      getTodos(),
-      getUsers(),
-    ]);
+    startLoading();
+    const products = await getProducts();
+    setTimeout(() => {
+      finishLoading();
+      setProducts(products);
+    }, 500);
 
-    const items = todos.map(todo => ({
-      ...todo,
-      user: users.find(user => user.id === todo.userId),
-    }));
 
-    this.setState({
-      todos: items,
-      visibleTodos: items,
-      isLoaded: true,
-    });
 
-    this.handleSort(SORT_ORDER_ID);
-  };
+    loadData = async () => {
+      const [todos, users] = await Promise.all([
+        getTodos(),
+        getUsers(),
+      ]);
 
-  handleQueryChange = (event) => {
-    this.setState(
-      { query: event.target.value },
-      this.prepareTodos
-    );
-  };
+      const items = todos.map(todo => ({
+        ...todo,
+        user: users.find(user => user.id === todo.userId),
+      }));
 
-  handleSort = (sortField) => {
-    this.setState(
-      prev => {
-        const isSortedAsc = prev.sortField === sortField ? !prev.isSortedAsc : true;
-
-        return { sortField, isSortedAsc };
-      },
-
-      this.prepareTodos,
-    );
-  };
-
-  prepareTodos = () => {
-    this.setState(({ isSortedAsc, todos, sortField, query }) => {
-      const normalizedQuery = query.toLowerCase();
-
-      const filteredTodos = todos.filter((todo) => {
-        const searchString = `${todo.title}\n${todo.user.name}`.toLowerCase();
-
-        return searchString.includes(normalizedQuery);
+      this.setState({
+        todos: items,
+        visibleTodos: items,
+        isLoaded: true,
       });
 
-      const sign = isSortedAsc ? 1 : -1;
+      this.handleSort(SORT_ORDER_ID);
+    };
 
-      const callbackMap = {
-        [SORT_ORDER_TITLE]: (a, b) => a.title.localeCompare(b.title) * sign,
-        [SORT_ORDER_USER]: (a, b) => a.user.name.localeCompare(b.user.name) * sign,
-        [SORT_ORDER_COMPLETED]: (a, b) => (a.completed - b.completed) * sign,
-        [SORT_ORDER_ID]: (a, b) => (a.id - b.id) * sign,
-      };
+    handleQueryChange = (event) => {
+      this.setState(
+        { query: event.target.value },
+        this.prepareTodos
+      );
+    };
 
-      const callback = callbackMap[sortField] || callbackMap[SORT_ORDER_ID];
+    handleSort = (sortField) => {
+      this.setState(
+        prev => {
+          const isSortedAsc = prev.sortField === sortField ? !prev.isSortedAsc : true;
 
-      return {
-        visibleTodos: filteredTodos.sort(callback),
-      };
-    })
-  };
+          return { sortField, isSortedAsc };
+        },
 
-  toggleTodo = (todoToToggle) => {
-    this.setState(
-      prev => {
-        const todos = prev.todos.map(todo => {
-          if (todoToToggle.id !== todo.id) {
-            return todo;
-          }
+        this.prepareTodos,
+      );
+    };
 
-          return {
-            ...todo,
-            completed: !todo.completed,
-          };
+    prepareTodos = () => {
+      this.setState(({ isSortedAsc, todos, sortField, query }) => {
+        const normalizedQuery = query.toLowerCase();
+
+        const filteredTodos = todos.filter((todo) => {
+          const searchString = `${todo.title}\n${todo.user.name}`.toLowerCase();
+
+          return searchString.includes(normalizedQuery);
         });
 
-        return { todos };
-      },
+        const sign = isSortedAsc ? 1 : -1;
 
-      this.prepareTodos
-    );
-  };
+        const callbackMap = {
+          [SORT_ORDER_TITLE]: (a, b) => a.title.localeCompare(b.title) * sign,
+          [SORT_ORDER_USER]: (a, b) => a.user.name.localeCompare(b.user.name) * sign,
+          [SORT_ORDER_COMPLETED]: (a, b) => (a.completed - b.completed) * sign,
+          [SORT_ORDER_ID]: (a, b) => (a.id - b.id) * sign,
+        };
 
-  render() {
-    const { isLoaded, visibleTodos, sortField, query } = this.state;
-    const unfinishedTodos = visibleTodos.filter(todo => !todo.completed);
+        const callback = callbackMap[sortField] || callbackMap[SORT_ORDER_ID];
 
-    return (
-      <div className="App">
-        <h2>{unfinishedTodos.length} tasks left</h2>
+        return {
+          visibleTodos: filteredTodos.sort(callback),
+        };
+      })
+    };
 
-        <input
-          type="text"
-          value={query}
-          onChange={this.handleQueryChange}
-          className="search"
-        />
+    toggleTodo = (todoToToggle) => {
+      this.setState(
+        prev => {
+          const todos = prev.todos.map(todo => {
+            if (todoToToggle.id !== todo.id) {
+              return todo;
+            }
 
-        {isLoaded ? (
-          <TodoList
-            items={visibleTodos}
-            onSort={this.handleSort}
-            sortField={sortField}
-            toggleTodo={this.toggleTodo}
+            return {
+              ...todo,
+              completed: !todo.completed,
+            };
+          });
+
+          return { todos };
+        },
+
+        this.prepareTodos
+      );
+    };
+
+    render() {
+      const { isLoaded, visibleTodos, sortField, query } = this.state;
+      const unfinishedTodos = visibleTodos.filter(todo => !todo.completed);
+
+      return (
+        <div className="App">
+          <h2>{unfinishedTodos.length} tasks left</h2>
+
+          <input
+            type="text"
+            value={query}
+            onChange={this.handleQueryChange}
+            className="search"
           />
-        ) : (
-            <button onClick={this.loadData} className="btn_load">Load</button>
-          )}
-      </div>
-    );
+
+          {isLoaded ? (
+            <TodoList
+              items={visibleTodos}
+              onSort={this.handleSort}
+              sortField={sortField}
+              toggleTodo={this.toggleTodo}
+            />
+          ) : (
+              <button onClick={this.loadData} className="btn_load">Load</button>
+            )}
+        </div>
+      );
+    }
   }
-}
 
-const mapState = (state) => ({
-  count: state.count,
-});
+  const mapState = (state) => ({
+    visibleTodos: [],
+    query: '',
+  });
 
-const mapDispatch = (dispatch) => ({
-  increase: () => dispatch(increaseAction),
-  decrease: () => dispatch(decreaseAction),
-});
+  const mapDispatch = (dispatch) => ({
+    handleQueryChange: () => dispatch(handleQueryChangeAction),
+    loadData: () => dispatch(loadDataAction),
+  });
 
-export default connect(mapState, mapDispatch)(App);
+  export default connect(mapState, mapDispatch)(App);
